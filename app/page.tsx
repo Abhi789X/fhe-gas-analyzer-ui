@@ -1,76 +1,74 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import axios from "axios";
+import { useState } from 'react';
 
 export default function Home() {
-  const [walletAddress, setWalletAddress] = useState("");
-  const [selectedChains, setSelectedChains] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [wallet, setWallet] = useState('');
   const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [selectedChains, setSelectedChains] = useState<string[]>([]);
 
   const chains = [
-    "eth-mainnet",
-    "bsc-mainnet",
-    "polygon-mainnet",
-    "arbitrum-mainnet",
-    "optimism-mainnet",
-    "avalanche-mainnet",
-    "base-mainnet",
-    "linea-mainnet",
+    'eth-mainnet',
+    'bsc-mainnet',
+    'polygon-mainnet',
+    'arbitrum-mainnet',
+    'optimism-mainnet',
+    'avalanche-mainnet',
+    'base-mainnet',
+    'linea-mainnet',
   ];
 
   const toggleChain = (chain: string) => {
-    setSelectedChains((prev) =>
+    setSelectedChains(prev =>
       prev.includes(chain)
-        ? prev.filter((c) => c !== chain)
+        ? prev.filter(c => c !== chain)
         : [...prev, chain]
     );
   };
 
   const handleCheck = async () => {
+    if (!wallet || selectedChains.length === 0) return alert("Enter wallet and select at least 1 chain.");
     setLoading(true);
-    setError("");
     setResult(null);
-
     try {
-      const res = await axios.post("http://161.97.103.11:7272/gas", {
-        wallet_address: walletAddress,
-        chains: selectedChains,
+      const response = await fetch('http://161.97.103.11:7272/gas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet_address: wallet, chains: selectedChains }),
       });
-      setResult(res.data);
+
+      if (!response.ok) throw new Error("Fetch failed");
+
+      const data = await response.json();
+      setResult(data);
     } catch (err) {
-      setError("❌ Error connecting to backend");
-    } finally {
-      setLoading(false);
+      setResult({ error: '❌ Error connecting to backend' });
     }
+    setLoading(false);
   };
 
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center p-6">
-      <div className="max-w-xl w-full glass p-8 rounded-2xl shadow-lg border border-white/20">
-        <h1 className="text-3xl font-bold mb-4 text-center">
-          🔍 FHE Gas Analyzer
-        </h1>
+      <div className="glass p-6 max-w-xl w-full rounded-2xl shadow-lg space-y-4">
+        <h1 className="text-2xl font-bold text-center mb-4">FHE Gas Spending Analyzer</h1>
 
         <input
-          type="text"
-          value={walletAddress}
-          onChange={(e) => setWalletAddress(e.target.value)}
+          className="w-full px-4 py-2 rounded bg-white/10 backdrop-blur border border-white/20 text-white"
           placeholder="Enter Wallet Address"
-          className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-white/20 placeholder-white"
+          value={wallet}
+          onChange={e => setWallet(e.target.value)}
         />
 
-        <div className="flex flex-wrap gap-2 mb-4">
-          {chains.map((chain) => (
+        <div className="flex flex-wrap gap-2">
+          {chains.map(chain => (
             <button
               key={chain}
               onClick={() => toggleChain(chain)}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-3 py-1 rounded-full text-sm border ${
                 selectedChains.includes(chain)
-                  ? "bg-pink-500 text-white"
-                  : "bg-white/10 text-white"
+                  ? 'bg-pink-500 text-white'
+                  : 'bg-white/10 text-gray-300'
               }`}
             >
               {chain}
@@ -80,26 +78,33 @@ export default function Home() {
 
         <button
           onClick={handleCheck}
-          className="w-full py-3 bg-pink-600 hover:bg-pink-700 transition rounded-lg font-semibold"
-          disabled={loading}
+          className="w-full bg-pink-600 hover:bg-pink-700 transition rounded px-4 py-2 font-semibold"
         >
-          {loading ? "Analyzing..." : "Analyze Gas"}
+          {loading ? 'Checking...' : 'Check Gas Spend'}
         </button>
 
-        {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
-
         {result && (
-          <div className="mt-6">
-            <h2 className="text-xl font-semibold mb-2 text-pink-400">
-              Total Gas Spent (Encrypted): {result.encrypted_total}
-            </h2>
-            <ul className="space-y-1 text-sm text-white/80">
-              {Object.entries(result.breakdown).map(([chain, usd]) => (
-                <li key={chain}>
-                  <strong>{chain}</strong>: {String(usd)}
-                </li>
-              ))}
-            </ul>
+          <div className="mt-4 text-sm space-y-2">
+            {result.error && <p className="text-red-500">{result.error}</p>}
+
+            {result.breakdown && (
+              <>
+                <h2 className="text-lg font-semibold">Per Chain Gas Spend:</h2>
+                <ul className="list-disc pl-5 space-y-1">
+                  {Object.entries(result.breakdown).map(([chain, usd]) => (
+                    <li key={chain}>
+                      <strong>{chain}</strong>: {usd}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {result.encrypted_total_usd && (
+              <p className="text-green-400">
+                🔒 Encrypted Total Spend (USD): <br /> <code>{result.encrypted_total_usd}</code>
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -41,7 +41,7 @@ export default function Home() {
       });
       setResult(res.data);
     } catch (err) {
-      setError("Error connecting to backend. Try again.");
+      setError("❌ Error connecting to backend");
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export default function Home() {
           className="w-full py-3 bg-pink-600 hover:bg-pink-700 transition rounded-lg font-semibold"
           disabled={loading}
         >
-          {loading ? "Checking..." : "Analyze Gas"}
+          {loading ? "Analyzing..." : "Analyze Gas"}
         </button>
 
         {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
@@ -91,7 +91,7 @@ export default function Home() {
         {result && (
           <div className="mt-6">
             <h2 className="text-xl font-semibold mb-2 text-pink-400">
-              Total Gas Spent: {result.encrypted_total}
+              Total Gas Spent (Encrypted): {result.encrypted_total}
             </h2>
             <ul className="space-y-1 text-sm text-white/80">
               {Object.entries(result.breakdown).map(([chain, usd]) => (

@@ -3,7 +3,10 @@
 @tailwind utilities;
 
 body {
-  background: #0e0e0e;
-  color: white;
-  font-family: sans-serif;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.glass {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
 }

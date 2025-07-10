@@ -1,12 +1,15 @@
+import "./globals.css";
+import { ReactNode } from "react";
+
 export const metadata = {
   title: "FHE Gas Analyzer",
-  description: "Check your gas spending across all chains privately",
+  description: "Check encrypted gas spending across chains",
 };
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <html lang="en">

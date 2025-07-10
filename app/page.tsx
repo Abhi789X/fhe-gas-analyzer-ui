@@ -1,25 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
-
-const CHAINS = [
-  "eth-mainnet",
-  "bsc-mainnet",
-  "polygon-mainnet",
-  "avalanche-mainnet",
-  "arbitrum-mainnet",
-  "optimism-mainnet",
-  "base-mainnet",
-  "linea-mainnet",
-  "scroll-mainnet"
-];
+import axios from "axios";
 
 export default function Home() {
-  const [wallet, setWallet] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
   const [selectedChains, setSelectedChains] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+
+  const chains = [
+    "eth-mainnet",
+    "bsc-mainnet",
+    "polygon-mainnet",
+    "arbitrum-mainnet",
+    "optimism-mainnet",
+    "avalanche-mainnet",
+    "base-mainnet",
+    "linea-mainnet",
+  ];
 
   const toggleChain = (chain: string) => {
     setSelectedChains((prev) =>
@@ -29,25 +29,17 @@ export default function Home() {
     );
   };
 
-  const fetchData = async () => {
+  const handleCheck = async () => {
     setLoading(true);
     setError("");
     setResult(null);
 
     try {
-      const res = await fetch("http://161.97.103.11:7272/gas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          wallet_address: wallet,
-          chains: selectedChains,
-        }),
+      const res = await axios.post("http://161.97.103.11:7272/gas", {
+        wallet_address: walletAddress,
+        chains: selectedChains,
       });
-
-      if (!res.ok) throw new Error("Backend error");
-
-      const data = await res.json();
-      setResult(data);
+      setResult(res.data);
     } catch (err) {
       setError("Error connecting to backend. Try again.");
     } finally {
@@ -56,62 +48,61 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen p-6 bg-gradient-to-br from-black via-gray-900 to-black">
-      <div className="max-w-2xl mx-auto glassmorphic p-6 rounded-2xl shadow-lg">
-        <h1 className="text-3xl font-bold mb-4">FHE Gas Spending Analyzer</h1>
+    <main className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+      <div className="max-w-xl w-full glass p-8 rounded-2xl shadow-lg border border-white/20">
+        <h1 className="text-3xl font-bold mb-4 text-center">
+          🔍 FHE Gas Analyzer
+        </h1>
 
         <input
           type="text"
-          placeholder="Enter wallet address"
-          className="w-full p-2 rounded bg-darkglass backdrop-blur-xs mb-4 border border-gray-700"
-          value={wallet}
-          onChange={(e) => setWallet(e.target.value)}
+          value={walletAddress}
+          onChange={(e) => setWalletAddress(e.target.value)}
+          placeholder="Enter Wallet Address"
+          className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-white/20 placeholder-white"
         />
 
         <div className="flex flex-wrap gap-2 mb-4">
-          {CHAINS.map((chain) => (
+          {chains.map((chain) => (
             <button
               key={chain}
-              className={`px-3 py-1 rounded-full border ${
-                selectedChains.includes(chain)
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-400"
-              }`}
               onClick={() => toggleChain(chain)}
+              className={`px-3 py-1 rounded-full text-sm ${
+                selectedChains.includes(chain)
+                  ? "bg-pink-500 text-white"
+                  : "bg-white/10 text-white"
+              }`}
             >
-              {chain.replace("-mainnet", "")}
+              {chain}
             </button>
           ))}
         </div>
 
         <button
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          onClick={fetchData}
-          disabled={loading || !wallet || selectedChains.length === 0}
+          onClick={handleCheck}
+          className="w-full py-3 bg-pink-600 hover:bg-pink-700 transition rounded-lg font-semibold"
+          disabled={loading}
         >
-          {loading ? "Checking..." : "Analyze"}
+          {loading ? "Checking..." : "Analyze Gas"}
         </button>
 
-        {error && <p className="text-red-400 mt-4">{error}</p>}
+        {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
 
         {result && (
           <div className="mt-6">
-            <h2 className="text-xl mb-2 font-semibold">Gas Breakdown</h2>
-            <ul className="text-sm mb-4">
+            <h2 className="text-xl font-semibold mb-2 text-pink-400">
+              Total Gas Spent: {result.encrypted_total}
+            </h2>
+            <ul className="space-y-1 text-sm text-white/80">
               {Object.entries(result.breakdown).map(([chain, usd]) => (
                 <li key={chain}>
-                  <strong>{chain}</strong>: {usd}
+                  <strong>{chain}</strong>: {String(usd)}
                 </li>
               ))}
             </ul>
-
-            <div className="text-sm text-green-400 break-all">
-              <span className="text-white font-semibold">Encrypted Total USD:</span><br />
-              {result.encrypted_total_usd}
-            </div>
           </div>
         )}
       </div>
     </main>
   );
-          }
+}
